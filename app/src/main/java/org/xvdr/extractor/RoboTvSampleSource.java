@@ -6,6 +6,8 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
+import com.google.android.exoplayer.DecoderInfo;
+import com.google.android.exoplayer.MediaCodecUtil;
 import com.google.android.exoplayer.MediaFormat;
 import com.google.android.exoplayer.MediaFormatHolder;
 import com.google.android.exoplayer.SampleHolder;
@@ -79,6 +81,7 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
     private Loader mLoader;
 
     private boolean mAudioPassthrough;
+    private boolean mMpegAudioHwSupport;
 
     private int mTrackCount = 0;
     private int mTracksEnabledCount = 0;
@@ -142,6 +145,23 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
 
         mLoader = new Loader("roboTV:streamloader");
         mAllocator = new AdaptiveAllocator(200, 32 * 1024);
+
+        DecoderInfo info = null;
+
+        try {
+            info = MediaCodecUtil.getDecoderInfo(MimeTypes.AUDIO_MPEG_L2, false);
+        }
+        catch (MediaCodecUtil.DecoderQueryException e) {
+            e.printStackTrace();
+        }
+
+        mMpegAudioHwSupport = (info != null);
+        if(mMpegAudioHwSupport) {
+            Log.i(TAG, "mpeg audio hw decoding supported");
+        }
+        else {
+            Log.i(TAG, "mpeg audio will use sw decoding");
+        }
 
         logChannelConfiguration(mAudioPassthrough, mChannelConfiguration);
     }
@@ -416,7 +436,7 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
                 break;
 
             case MimeTypes.AUDIO_MPEG:
-                reader = new MpegAudioReader(outputTrack, stream, false, mAllocator);
+                reader = new MpegAudioReader(outputTrack, stream, mMpegAudioHwSupport, mAllocator);
                 break;
         }
 

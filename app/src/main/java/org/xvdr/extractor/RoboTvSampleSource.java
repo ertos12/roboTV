@@ -151,11 +151,12 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
         try {
             info = MediaCodecUtil.getDecoderInfo(MimeTypes.AUDIO_MPEG_L2, false);
         }
-        catch (MediaCodecUtil.DecoderQueryException e) {
+        catch(MediaCodecUtil.DecoderQueryException e) {
             e.printStackTrace();
         }
 
         mMpegAudioHwSupport = (info != null);
+
         if(mMpegAudioHwSupport) {
             Log.i(TAG, "mpeg audio hw decoding supported");
         }

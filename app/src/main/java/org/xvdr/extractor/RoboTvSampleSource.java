@@ -92,6 +92,7 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
 
     private long mCurrentPositionTimeshift;
     private long mStartPositionTimeshift;
+    private long mEndPositionTimeshift = -1;
     private long mSeekPosition = -1;
 
     final private int[] mPids = new int[TRACK_COUNT];
@@ -119,10 +120,10 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
     }
 
     public RoboTvSampleSource(Connection connection, Handler handler) {
-        this(connection, handler, null, false, Player.CHANNELS_SURROUND);
+        this(connection, handler, null, false, Player.CHANNELS_SURROUND, 400);
     }
 
-    public RoboTvSampleSource(Connection connection, Handler handler, AudioCapabilities audioCapabilities, boolean audioPassthrough, int channelConfiguration) {
+    public RoboTvSampleSource(Connection connection, Handler handler, AudioCapabilities audioCapabilities, boolean audioPassthrough, int channelConfiguration, int queueSize) {
         mConnection = connection;
         mHandler = handler;
         mBundle = new StreamBundle();
@@ -137,7 +138,7 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
 
         // create output tracks
         for(int i = 0; i < TRACK_COUNT; i++) {
-            mOutputTracks[i] = new PacketQueue();
+            mOutputTracks[i] = new PacketQueue(queueSize);
             mPendingDiscontinuities[i] = false;
         }
 
@@ -373,6 +374,7 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
                     mStartPositionTimeshift = p;
                 }
 
+                mEndPositionTimeshift = packet.getS64();
                 break;
         }
     }
@@ -683,6 +685,10 @@ public class RoboTvSampleSource implements SampleSource, SampleSource.SampleSour
 
     public long getStartPositionWallclock() {
         return mStartPositionTimeshift;
+    }
+
+    public long getEndPositionWallclock() {
+        return mEndPositionTimeshift;
     }
 
     public long getCurrentPositionWallclock() {
